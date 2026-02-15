@@ -1,6 +1,6 @@
 # Hand Washing Skill Assessment System
 
-A real-time, AI-powered system that observes and assesses hand washing technique using a **Finite State Machine (FSM)**, **Vision Language Models (VLMs)**, **audio classification (YAMNet)**, and **text-to-speech feedback**. Built for the University of Michigan SURE program (Project #9: Seeing Skill with States).
+A real-time, AI-powered system that observes and assesses hand washing technique using a **Finite State Machine (FSM)**, **Vision Language Models (VLMs)**, **audio classification (YAMNet)**, and **text-to-speech feedback**. 
 
 ---
 
