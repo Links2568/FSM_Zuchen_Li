@@ -1,4 +1,4 @@
-"""Unit tests for the FSM engine with 10-state hand washing model."""
+"""Unit tests for the FSM engine with 12-state hand washing model."""
 
 import sys
 import os
@@ -15,19 +15,17 @@ def test_initial_state():
 
 
 def test_idle_to_water_no_hands():
-    """Water for >3s without hands → WATER_NO_HANDS."""
+    """Water for >1.3s without hands → WATER_NO_HANDS."""
     fsm = FSMEngine()
     cues = {"hands_visible": 0.1, "water_sound": 0.7}
-    # First call: starts the sustained timer
     assert fsm.update(cues) is None
-    # Pretend 4 seconds have passed
     fsm._condition_since["water_no_hands"] = time.time() - 4
     result = fsm.update(cues)
     assert result == ("IDLE", "WATER_NO_HANDS")
 
 
 def test_idle_to_hands_no_water():
-    """Hands for >3s without water → HANDS_NO_WATER."""
+    """Hands for >1.3s without water → HANDS_NO_WATER."""
     fsm = FSMEngine()
     cues = {"hands_visible": 0.8, "water_sound": 0.1}
     fsm.update(cues)
@@ -49,14 +47,12 @@ def test_idle_to_washing():
 def test_water_no_hands_to_washing():
     """From WATER_NO_HANDS, hands appear + water → WASHING."""
     fsm = FSMEngine()
-    # Get to WATER_NO_HANDS
     cues_water = {"hands_visible": 0.1, "water_sound": 0.7}
     fsm.update(cues_water)
     fsm._condition_since["water_no_hands"] = time.time() - 4
     fsm.update(cues_water)
     assert fsm.current_state == "WATER_NO_HANDS"
 
-    # Now hands appear under water
     cues_both = {"hands_under_water": 0.8, "water_sound": 0.7}
     fsm.update(cues_both)
     fsm._condition_since["hands_and_water"] = time.time() - 3
@@ -67,7 +63,6 @@ def test_water_no_hands_to_washing():
 def test_washing_to_soaping():
     """Soap detected → SOAPING (immediate)."""
     fsm = FSMEngine()
-    # Skip to WASHING
     fsm._transition_to("WASHING")
     cues = {"hands_on_soap": 0.7, "hands_visible": 0.8}
     result = fsm.update(cues)
@@ -75,7 +70,7 @@ def test_washing_to_soaping():
 
 
 def test_soaping_to_rinsing():
-    """Hands under water for >2s → RINSING."""
+    """Hands under water for >1.3s → RINSING."""
     fsm = FSMEngine()
     fsm._transition_to("SOAPING")
     cues = {"hands_under_water": 0.7, "water_sound": 0.7}
@@ -85,8 +80,69 @@ def test_soaping_to_rinsing():
     assert result == ("SOAPING", "RINSING")
 
 
+def test_rinsing_to_rinsing_ok():
+    """Rinsing for >= 5s with active cues → RINSING_OK."""
+    fsm = FSMEngine()
+    fsm._transition_to("RINSING")
+    # Simulate 6 seconds in RINSING
+    fsm.time_entered = time.time() - 6
+    cues = {"hands_under_water": 0.8, "water_sound": 0.7}
+    result = fsm.update(cues)
+    assert result == ("RINSING", "RINSING_OK")
+
+
+def test_rinsing_ok_to_rinsing_thorough():
+    """RINSING_OK for >= 5 more seconds → RINSING_THOROUGH."""
+    fsm = FSMEngine()
+    fsm._transition_to("RINSING_OK")
+    fsm.time_entered = time.time() - 6
+    cues = {"hands_under_water": 0.8, "water_sound": 0.7}
+    result = fsm.update(cues)
+    assert result == ("RINSING_OK", "RINSING_THOROUGH")
+
+
+def test_rinsing_to_soaping_resoap():
+    """Re-soap from RINSING."""
+    fsm = FSMEngine()
+    fsm._transition_to("RINSING")
+    cues = {"hands_on_soap": 0.7, "hands_visible": 0.8}
+    result = fsm.update(cues)
+    assert result == ("RINSING", "SOAPING")
+
+
+def test_rinsing_ok_to_soaping_resoap():
+    """Re-soap from RINSING_OK."""
+    fsm = FSMEngine()
+    fsm._transition_to("RINSING_OK")
+    cues = {"hands_on_soap": 0.7, "hands_visible": 0.8}
+    result = fsm.update(cues)
+    assert result == ("RINSING_OK", "SOAPING")
+
+
+def test_washing_skip_soap_to_towel():
+    """Skip soap: WASHING → TOWEL_DRYING."""
+    fsm = FSMEngine()
+    fsm._transition_to("WASHING")
+    cues = {"towel_drying": 0.7, "hands_visible": 0.8}
+    fsm.update(cues)
+    fsm._condition_since["towel_entry"] = time.time() - 3
+    result = fsm.update(cues)
+    assert result == ("WASHING", "TOWEL_DRYING")
+
+
+def test_soaping_skip_rinse_to_towel():
+    """Skip rinse: SOAPING → TOWEL_DRYING."""
+    fsm = FSMEngine()
+    fsm._transition_to("SOAPING")
+    cues = {"towel_drying": 0.7, "hands_visible": 0.8}
+    fsm.update(cues)
+    fsm._condition_since["towel_entry"] = time.time() - 3
+    result = fsm.update(cues)
+    assert result == ("SOAPING", "TOWEL_DRYING")
+
+
 def test_rinsing_to_towel():
-    """Towel for >2s → TOWEL_DRYING."""
+    """Towel for >1.3s → TOWEL_DRYING."""
     fsm = FSMEngine()
     fsm._transition_to("RINSING")
     cues = {"towel_drying": 0.7, "hands_visible": 0.8}
@@ -106,7 +162,7 @@ def test_rinsing_to_blower():
 
 
 def test_towel_to_done():
-    """Towel drying for >3s then stopped → DONE."""
+    """Towel drying for >1.3s then stopped → DONE."""
     fsm = FSMEngine()
     fsm._transition_to("TOWEL_DRYING")
     fsm.time_entered = time.time() - 4
@@ -119,11 +175,31 @@ def test_idle_timeout():
     """Any state (except DONE) → IDLE after 5s inactivity."""
     fsm = FSMEngine()
     fsm._transition_to("WASHING")
-    # No activity for 6 seconds
     fsm._last_activity_time = time.time() - 6
     cues = {"hands_visible": 0.1, "water_sound": 0.1}
     result = fsm.update(cues)
     assert result == ("WASHING", "IDLE")
+
+
+def test_idle_timeout_increments_lod():
+    """Idle timeout should increment lod_level."""
+    fsm = FSMEngine()
+    assert fsm.lod_level == 0
+    fsm._transition_to("WASHING")
+    fsm._last_activity_time = time.time() - 6
+    cues = {"hands_visible": 0.1, "water_sound": 0.1}
+    fsm.update(cues)
+    assert fsm.lod_level == 1
+    # Second idle timeout
+    fsm._transition_to("SOAPING")
+    fsm._last_activity_time = time.time() - 6
+    fsm.update(cues)
+    assert fsm.lod_level == 2
+    # Third should cap at 2
+    fsm._transition_to("RINSING")
+    fsm._last_activity_time = time.time() - 6
+    fsm.update(cues)
+    assert fsm.lod_level == 2
 
 
 def test_done_no_idle_timeout():
@@ -165,16 +241,37 @@ def test_no_transition_on_fallback_cues():
 def test_reset():
     fsm = FSMEngine()
     fsm._transition_to("WASHING")
+    fsm.lod_level = 2
     fsm.reset()
     assert fsm.current_state == "IDLE"
     assert len(fsm.state_history) == 1
     assert len(fsm._condition_since) == 0
+    assert fsm.lod_level == 0
 
 
 def test_score():
     fsm = FSMEngine()
     assert fsm.get_score() is None
-    # Walk through to DONE
+    # Walk through ideal path to DONE (towel drying)
+    # WASHING(15) + SOAPING(25) + RINSING(8) + RINSING_OK(6)
+    # + RINSING_THOROUGH(6) + TOWEL_DRYING(15) + DONE(10) = 85
+    fsm._transition_to("WASHING")
+    fsm._transition_to("SOAPING")
+    fsm._transition_to("RINSING")
+    fsm._transition_to("RINSING_OK")
+    fsm._transition_to("RINSING_THOROUGH")
+    fsm._transition_to("TOWEL_DRYING")
+    fsm._transition_to("DONE")
+    score = fsm.get_score()
+    assert score is not None
+    assert score["total"] == 85
+    assert score["max_total"] == 100
+
+
+def test_score_partial():
+    """Score without rinsing quality sub-states."""
+    fsm = FSMEngine()
+    # WASHING(15) + SOAPING(25) + RINSING(8) + TOWEL_DRYING(15) + DONE(10) = 73
     fsm._transition_to("WASHING")
     fsm._transition_to("SOAPING")
     fsm._transition_to("RINSING")
@@ -182,8 +279,7 @@ def test_score():
     fsm._transition_to("DONE")
     score = fsm.get_score()
     assert score is not None
-    assert score["total"] > 0
-    assert score["max_total"] == 100
+    assert score["total"] == 73
 
 
 if __name__ == "__main__":
@@ -194,13 +290,21 @@ if __name__ == "__main__":
     test_water_no_hands_to_washing()
     test_washing_to_soaping()
     test_soaping_to_rinsing()
+    test_rinsing_to_rinsing_ok()
+    test_rinsing_ok_to_rinsing_thorough()
+    test_rinsing_to_soaping_resoap()
+    test_rinsing_ok_to_soaping_resoap()
+    test_washing_skip_soap_to_towel()
+    test_soaping_skip_rinse_to_towel()
     test_rinsing_to_towel()
     test_rinsing_to_blower()
     test_towel_to_done()
     test_idle_timeout()
+    test_idle_timeout_increments_lod()
     test_done_no_idle_timeout()
     test_no_transition_on_zero_cues()
     test_no_transition_on_fallback_cues()
     test_reset()
     test_score()
+    test_score_partial()
     print("All FSM tests passed!")

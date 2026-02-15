@@ -16,7 +16,7 @@ from config import (
 from fsm.states import STATE_LAYOUT, STATES
 from gui.drawing import rounded_rect
 
-# Pre-defined transition edges for drawing arrows (from_state, to_state)
+# Primary forward edges (always drawn)
 _FORWARD_EDGES = [
     ("IDLE", "WATER_NO_HANDS"),
     ("IDLE", "HANDS_NO_WATER"),
@@ -25,6 +25,10 @@ _FORWARD_EDGES = [
     ("HANDS_NO_WATER", "WASHING"),
     ("WASHING", "SOAPING"),
     ("SOAPING", "RINSING"),
+    # Rinsing quality progression (horizontal)
+    ("RINSING", "RINSING_OK"),
+    ("RINSING_OK", "RINSING_THOROUGH"),
+    # Drying from rinsing (any level)
     ("RINSING", "TOWEL_DRYING"),
     ("RINSING", "CLOTHES_DRYING"),
     ("RINSING", "BLOWER_DRYING"),
@@ -33,39 +37,64 @@ _FORWARD_EDGES = [
     ("BLOWER_DRYING", "DONE"),
 ]
 
+# Optional edges: only drawn if the transition was actually taken
+_OPTIONAL_EDGES = [
+    # Skip soap
+    ("WASHING", "TOWEL_DRYING"),
+    ("WASHING", "CLOTHES_DRYING"),
+    ("WASHING", "BLOWER_DRYING"),
+    # Skip rinse
+    ("SOAPING", "TOWEL_DRYING"),
+    ("SOAPING", "CLOTHES_DRYING"),
+    ("SOAPING", "BLOWER_DRYING"),
+    # Re-soap
+    ("RINSING", "SOAPING"),
+    ("RINSING_OK", "SOAPING"),
+    ("RINSING_THOROUGH", "SOAPING"),
+    # Drying from RINSING_OK / RINSING_THOROUGH
+    ("RINSING_OK", "TOWEL_DRYING"),
+    ("RINSING_OK", "CLOTHES_DRYING"),
+    ("RINSING_OK", "BLOWER_DRYING"),
+    ("RINSING_THOROUGH", "TOWEL_DRYING"),
+    ("RINSING_THOROUGH", "CLOTHES_DRYING"),
+    ("RINSING_THOROUGH", "BLOWER_DRYING"),
+]
+
 
 class FSMPanel:
-    """Right panel: live FSM flowchart with 8-layer multi-column layout."""
+    """Right panel: live FSM flowchart with 7-layer multi-column layout."""
 
     def __init__(self, width: int, height: int) -> None:
         self.width = width
         self.height = height
 
         # Box sizing
-        self.box_w = 120
+        self.box_w = 110
         self.box_h = 32
-        self.corner_r = 10  # corner radius for rounded boxes
-        self.active_extra = 8  # active box is slightly larger
+        self.corner_r = 10
+        self.active_extra = 8
 
         # Vertical layout: 7 layers
         n_layers = len(STATE_LAYOUT)
-        self.title_h = 55   # room for title + progress bar
-        self.footer_h = 80  # room for guidance + score
+        self.title_h = 55
+        self.footer_h = 80
         usable = height - self.title_h - self.footer_h
         self.layer_spacing = usable // (n_layers + 1)
         self.start_y = self.title_h + self.layer_spacing
 
         # Pre-compute center positions for every state: state_name -> (cx, cy)
         self._positions: Dict[str, Tuple[int, int]] = {}
+        self._layer_of: Dict[str, int] = {}
         for layer_idx, layer in enumerate(STATE_LAYOUT):
             cy = self.start_y + layer_idx * self.layer_spacing
             n = len(layer)
             for col_idx, state_name in enumerate(layer):
                 cx = int(width * (col_idx + 1) / (n + 1))
                 self._positions[state_name] = (cx, cy)
+                self._layer_of[state_name] = layer_idx
 
         # Total states (excluding DONE for progress)
-        self._total_states = len(self._positions) - 1  # DONE doesn't count
+        self._total_states = len(self._positions) - 1
 
     def render(
         self,
@@ -73,6 +102,7 @@ class FSMPanel:
         state_history: List[Dict],
         time_in_state: float,
         score: Optional[Dict] = None,
+        guidance: str = "",
     ) -> np.ndarray:
         panel = np.full((self.height, self.width, 3), GUI_BG_COLOR, dtype=np.uint8)
 
@@ -91,16 +121,19 @@ class FSMPanel:
 
         # --- Arrows (behind boxes) ---
         taken_edges = self._compute_taken_edges(state_history)
+
+        # Draw primary forward edges
         for src, dst in _FORWARD_EDGES:
             if src in self._positions and dst in self._positions:
-                sx, sy = self._positions[src]
-                dx, dy = self._positions[dst]
-                p1 = (sx, sy + self.box_h // 2 + 2)
-                p2 = (dx, dy - self.box_h // 2 - 2)
                 is_taken = (src, dst) in taken_edges
                 color = COLOR_ARROW_TAKEN if is_taken else COLOR_ARROW
                 thick = 2 if is_taken else 1
-                cv2.arrowedLine(panel, p1, p2, color, thick, tipLength=0.12)
+                self._draw_arrow(panel, src, dst, color, thick)
+
+        # Draw optional edges only if taken
+        for src, dst in _OPTIONAL_EDGES:
+            if (src, dst) in taken_edges and src in self._positions and dst in self._positions:
+                self._draw_arrow(panel, src, dst, COLOR_ARROW_TAKEN, 2)
 
         # --- State boxes ---
         for state_name, (cx, cy) in self._positions.items():
@@ -116,15 +149,36 @@ class FSMPanel:
 
         # --- Guidance text ---
         guidance_y = self.height - self.footer_h + 15
-        state_def = STATES.get(current_state)
-        if state_def:
-            guidance = state_def.guidance_message
-            gts = cv2.getTextSize(guidance, cv2.FONT_HERSHEY_SIMPLEX, 0.4, 1)[0]
-            gx = max(10, self.width // 2 - gts[0] // 2)
-            cv2.putText(
-                panel, guidance, (gx, guidance_y),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.4, COLOR_ACTIVE, 1,
-            )
+        if guidance:
+            display_guidance = guidance
+        else:
+            state_def = STATES.get(current_state)
+            display_guidance = state_def.guidance_message if state_def else ""
+
+        if display_guidance:
+            # Wrap long text
+            max_chars = self.width // 7
+            if len(display_guidance) > max_chars:
+                # Split into two lines
+                mid = display_guidance.rfind(" ", 0, max_chars)
+                if mid == -1:
+                    mid = max_chars
+                line1 = display_guidance[:mid]
+                line2 = display_guidance[mid:].strip()
+                for i, line in enumerate([line1, line2]):
+                    gts = cv2.getTextSize(line, cv2.FONT_HERSHEY_SIMPLEX, 0.38, 1)[0]
+                    gx = max(10, self.width // 2 - gts[0] // 2)
+                    cv2.putText(
+                        panel, line, (gx, guidance_y + i * 16),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.38, COLOR_ACTIVE, 1,
+                    )
+            else:
+                gts = cv2.getTextSize(display_guidance, cv2.FONT_HERSHEY_SIMPLEX, 0.4, 1)[0]
+                gx = max(10, self.width // 2 - gts[0] // 2)
+                cv2.putText(
+                    panel, display_guidance, (gx, guidance_y),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, COLOR_ACTIVE, 1,
+                )
 
         # --- Score display ---
         score_y = self.height - 15
@@ -140,10 +194,35 @@ class FSMPanel:
 
         return panel
 
+    # ── Arrow drawing ──
+
+    def _draw_arrow(
+        self, panel: np.ndarray, src: str, dst: str, color: tuple, thick: int,
+    ) -> None:
+        sx, sy = self._positions[src]
+        dx, dy = self._positions[dst]
+        src_layer = self._layer_of[src]
+        dst_layer = self._layer_of[dst]
+
+        if src_layer == dst_layer:
+            # Horizontal arrow (same layer, e.g. RINSING → RINSING_OK)
+            p1 = (sx + self.box_w // 2 + 2, sy)
+            p2 = (dx - self.box_w // 2 - 2, dy)
+            cv2.arrowedLine(panel, p1, p2, color, thick, tipLength=0.15)
+        elif src_layer < dst_layer:
+            # Downward arrow (normal forward transition)
+            p1 = (sx, sy + self.box_h // 2 + 2)
+            p2 = (dx, dy - self.box_h // 2 - 2)
+            cv2.arrowedLine(panel, p1, p2, color, thick, tipLength=0.12)
+        else:
+            # Upward arrow (revert, e.g. RINSING → SOAPING)
+            p1 = (sx, sy - self.box_h // 2 - 2)
+            p2 = (dx, dy + self.box_h // 2 + 2)
+            cv2.arrowedLine(panel, p1, p2, color, thick, tipLength=0.12)
+
     # ── Progress bar ──
 
     def _draw_progress_bar(self, panel: np.ndarray, visited: set) -> None:
-        # Count visited (excluding DONE)
         n_visited = len(visited - {"DONE"})
         ratio = min(n_visited / max(self._total_states, 1), 1.0)
 
@@ -190,7 +269,7 @@ class FSMPanel:
         bw, bh = self.box_w + e * 2, self.box_h + e * 2
         x1, y1 = cx - bw // 2, cy - bh // 2
 
-        # Glow effect: larger semi-transparent rounded rect behind
+        # Glow effect
         glow_pad = 5
         glow_layer = panel.copy()
         rounded_rect(
@@ -209,34 +288,31 @@ class FSMPanel:
         rounded_rect(panel, (x1, y1), (x1 + bw, y1 + bh), COLOR_ACTIVE, radius=self.corner_r, thickness=2)
 
         label = self._short_label(name)
-        ts = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.45, 1)[0]
+        ts = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.42, 1)[0]
         cv2.putText(
             panel, label, (cx - ts[0] // 2, cy - 2),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.45, COLOR_ACTIVE, 1,
+            cv2.FONT_HERSHEY_SIMPLEX, 0.42, COLOR_ACTIVE, 1,
         )
         time_txt = f"{tis:.1f}s"
-        ts2 = cv2.getTextSize(time_txt, cv2.FONT_HERSHEY_SIMPLEX, 0.38, 1)[0]
+        ts2 = cv2.getTextSize(time_txt, cv2.FONT_HERSHEY_SIMPLEX, 0.35, 1)[0]
         cv2.putText(
             panel, time_txt, (cx - ts2[0] // 2, cy + 14),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.38, COLOR_TEXT, 1,
+            cv2.FONT_HERSHEY_SIMPLEX, 0.35, COLOR_TEXT, 1,
         )
 
     def _draw_completed_box(self, panel: np.ndarray, name: str, cx: int, cy: int) -> None:
         bw, bh = self.box_w, self.box_h
         x1, y1 = cx - bw // 2, cy - bh // 2
 
-        # Solid fill
         rounded_rect(panel, (x1, y1), (x1 + bw, y1 + bh), COLOR_COMPLETED, radius=self.corner_r, thickness=-1)
-        # Subtle border
         rounded_rect(panel, (x1, y1), (x1 + bw, y1 + bh), (80, 200, 50), radius=self.corner_r, thickness=1)
 
-        # Label with checkmark
         label = self._short_label(name)
         check_label = f"{label} \u2713"
-        ts = cv2.getTextSize(check_label, cv2.FONT_HERSHEY_SIMPLEX, 0.42, 1)[0]
+        ts = cv2.getTextSize(check_label, cv2.FONT_HERSHEY_SIMPLEX, 0.38, 1)[0]
         cv2.putText(
             panel, check_label, (cx - ts[0] // 2, cy + ts[1] // 2),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.42, COLOR_TEXT, 1,
+            cv2.FONT_HERSHEY_SIMPLEX, 0.38, COLOR_TEXT, 1,
         )
 
     def _draw_pending_box(self, panel: np.ndarray, name: str, cx: int, cy: int) -> None:
@@ -246,10 +322,10 @@ class FSMPanel:
         rounded_rect(panel, (x1, y1), (x1 + bw, y1 + bh), COLOR_PENDING, radius=self.corner_r, thickness=1)
 
         label = self._short_label(name)
-        ts = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.42, 1)[0]
+        ts = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.38, 1)[0]
         cv2.putText(
             panel, label, (cx - ts[0] // 2, cy + ts[1] // 2),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.42, COLOR_PENDING, 1,
+            cv2.FONT_HERSHEY_SIMPLEX, 0.38, COLOR_PENDING, 1,
         )
 
     # ── Score badge ──
@@ -262,14 +338,13 @@ class FSMPanel:
         bx = self.width // 2 - badge_w // 2
         by = y - badge_h + 2
 
-        # Colored badge background
         ratio = score["total"] / max(score["max_total"], 1)
         if ratio >= 0.8:
-            bg = (60, 160, 60)    # green
+            bg = (60, 160, 60)
         elif ratio >= 0.5:
-            bg = (40, 160, 200)   # yellow-ish
+            bg = (40, 160, 200)
         else:
-            bg = (60, 80, 180)    # red-ish
+            bg = (60, 80, 180)
         rounded_rect(panel, (bx, by), (bx + badge_w, by + badge_h), bg, radius=8, thickness=-1)
         cv2.putText(
             panel, text, (bx + 12, by + badge_h - 8),
@@ -286,6 +361,8 @@ class FSMPanel:
             "WASHING": "WASHING",
             "SOAPING": "SOAPING",
             "RINSING": "RINSING",
+            "RINSING_OK": "RINSE OK",
+            "RINSING_THOROUGH": "RINSE++",
             "TOWEL_DRYING": "TOWEL",
             "CLOTHES_DRYING": "CLOTHES",
             "BLOWER_DRYING": "BLOWER",

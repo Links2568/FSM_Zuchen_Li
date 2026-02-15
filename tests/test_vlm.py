@@ -40,17 +40,17 @@ def test_clamp_values():
 
 
 def test_missing_keys_default():
-    """Missing keys should default to 0.5."""
+    """Missing keys should default to 0 (binary mode)."""
     text = '{"hands_visible":0.8}'
     cues = _parse_vlm_response(text)
     assert cues["hands_visible"] == 0.8
-    assert cues["hands_on_soap"] == 0.5  # default
+    assert cues["hands_on_soap"] == 0.0  # default
 
 
 def test_fallback_cues():
-    """Fallback cues should all be 0.5."""
+    """Fallback cues should all be 0.0 (binary mode)."""
     cues = _fallback_cues()
-    assert all(v == 0.5 for v in cues.values())
+    assert all(v == 0.0 for v in cues.values())
     assert len(cues) == len(VISUAL_CUE_KEYS)
 
 

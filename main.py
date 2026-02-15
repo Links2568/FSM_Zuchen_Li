@@ -22,6 +22,7 @@ import numpy as np
 
 from config import (
     VLM_DISPATCH_INTERVAL,
+    VLM_API_KEY,
     AUDIO_SAMPLE_INTERVAL,
     POOL_MODE,
     VLM_PROVIDERS,
@@ -33,7 +34,7 @@ from sensing.audio_provider import AudioProvider, AUDIO_CUE_KEYS
 from sensing.ensemble import EnsembleMerger
 from fsm.engine import FSMEngine
 from feedback.tts import TTSFeedback
-from feedback.messages import TRANSITION_MESSAGES, STATE_WARNINGS
+from feedback.messages import TRANSITION_MESSAGES, STATE_WARNINGS, LOD_GUIDANCE
 from gui.app import GUIApp
 from output.logger import StateLogger
 from output.timeline import generate_timeline
@@ -111,7 +112,7 @@ def run_sensing_thread(
     return thread
 
 
-async def _startup_health_check(vlm_pool: VLMPool) -> None:
+async def _startup_health_check(vlm_pool: VLMPool, providers: list) -> None:
     """Run VLM health checks and report status."""
     print("Checking VLM endpoints...")
     results = await vlm_pool.health_check()
@@ -127,6 +128,13 @@ async def _startup_health_check(vlm_pool: VLMPool) -> None:
         print("  System will continue but visual cues may be unavailable.\n")
     else:
         print("  All VLM endpoints healthy.\n")
+
+    # Properly close async clients before asyncio.run() closes the event loop.
+    # This prevents "Event loop is closed" RuntimeError during garbage collection.
+    for p in providers:
+        if p._client is not None:
+            await p._client.close()
+            p._client = None
 
 
 def main() -> None:
@@ -156,20 +164,16 @@ def main() -> None:
     # --- Initialize components ---
     print("Initializing Hand Washing Assessment System...")
 
-    # VLM providers (remote via SSH tunnel)
+    # VLM providers
     providers = [
-        VLMProvider(name=p["name"], base_url=p["url"]) for p in VLM_PROVIDERS
+        VLMProvider(name=p["name"], base_url=p["url"], api_key=VLM_API_KEY)
+        for p in VLM_PROVIDERS
     ]
     vlm_pool = VLMPool(providers, mode=POOL_MODE)
 
     # Startup health check for VLM endpoints
-    asyncio.run(_startup_health_check(vlm_pool))
-
-    # asyncio.run() closed its event loop, so the httpx connections inside
-    # the AsyncOpenAI clients are now stale.  Drop them so the sensing
-    # thread's event loop creates fresh ones.
-    for p in providers:
-        p.reset_client()
+    # Clients are closed inside the async context to avoid "Event loop is closed" errors.
+    asyncio.run(_startup_health_check(vlm_pool, providers))
 
     # Audio
     audio_provider = AudioProvider()
@@ -314,12 +318,17 @@ def main() -> None:
             else:
                 display_time = fsm.time_in_state
 
+            # Compute LoD-aware guidance text
+            lod = fsm.lod_level
+            lod_msgs = LOD_GUIDANCE.get(fsm.current_state)
+            guidance = lod_msgs[min(lod, len(lod_msgs) - 1)] if lod_msgs else ""
+
             # Render split-screen GUI
             score = fsm.get_score()
             last_tts_msg = tts.last_message if tts else ""
             gui.render(
                 frame, fsm.current_state, display_time,
-                merged, fsm.state_history, last_tts_msg, score,
+                merged, fsm.state_history, last_tts_msg, score, guidance,
             )
 
             # Handle key presses

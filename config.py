@@ -1,16 +1,55 @@
 # config.py — All tunable parameters
 
-# === VLM (remote via SSH tunnel) ===
-VLM_MODEL_NAME = "qwen3vl"
-VLM_MAX_TOKENS = 80
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# ============================================================
+# VLM Backend — change this ONE line to switch API provider
+# ============================================================
+VLM_BACKEND = "local"  # "local" | "gemini"
+
+_LOCAL_CONFIG = {
+    "model_name": "qwen3vl",
+    "api_key": "dummy",
+    "dispatch_interval": 0.37,
+    "max_tokens": 80,
+    "providers": [
+        {"name": "qwen3vl_gpu0", "url": "http://localhost:8000/v1"},
+        {"name": "qwen3vl_gpu1", "url": "http://localhost:8001/v1"},
+        {"name": "qwen3vl_gpu2", "url": "http://localhost:8002/v1"},
+    ],
+}
+
+_GEMINI_CONFIG = {
+    "model_name": "gemini-2.5-flash",
+    "api_key": os.getenv("GEMINI_API_KEY", ""),
+    "dispatch_interval": 2.0,   # Gemini rate limits; lower if you have a paid tier
+    "max_tokens": 1024,         # Gemini thinking mode needs more token budget
+    "providers": [
+        {"name": "gemini_flash", "url": "https://generativelanguage.googleapis.com/v1beta/openai/"},
+    ],
+}
+
+_BACKENDS = {"local": _LOCAL_CONFIG, "gemini": _GEMINI_CONFIG}
+_active = _BACKENDS[VLM_BACKEND]
+
+# === VLM (derived from backend) ===
+VLM_MODEL_NAME = _active["model_name"]
+VLM_API_KEY = _active["api_key"]
+VLM_PROVIDERS = _active["providers"]
+VLM_DISPATCH_INTERVAL = _active["dispatch_interval"]
+VLM_MAX_TOKENS = _active["max_tokens"]
 VLM_TIMEOUT = 15
 
 VLM_PROMPT = (
     'Return ONLY JSON, no explanation: '
-    '{"hands_visible":0-1,"hands_under_water":0-1,'
-    '"hands_on_soap":0-1,"foam_visible":0-1,'
-    '"towel_drying":0-1,"hands_touch_clothes":0-1,'
-    '"blower_visible":0-1}. '
+    '{"hands_visible":0or1,"hands_under_water":0or1,'
+    '"hands_on_soap":0or1,"foam_visible":0or1,'
+    '"towel_drying":0or1,"hands_touch_clothes":0or1,'
+    '"blower_visible":0or1}. '
+    'Use 1 if clearly true, 0 if not or uncertain. '
     'hands_on_soap: hands touching or right next to soap, not just soap visible. '
     'hands_touch_clothes: hands rubbing or wiping against clothes worn on the person body.'
 )
@@ -24,7 +63,6 @@ AUDIO_SAMPLE_RATE = 16000
 AUDIO_CHUNK_DURATION = 2
 
 # === Timing ===
-VLM_DISPATCH_INTERVAL = 0.37
 AUDIO_SAMPLE_INTERVAL = 1.0
 
 # === FSM ===
@@ -52,22 +90,19 @@ COLOR_SECTION_ACCENT = (209, 206, 0)  # section header accent line
 
 # State badge colors for camera panel (BGR)
 STATE_BADGE_COLORS = {
-    "IDLE":            (140, 130, 120),  # gray
-    "WATER_NO_HANDS":  (200, 160, 40),   # blue
-    "HANDS_NO_WATER":  (50, 160, 200),   # orange
-    "WASHING":         (200, 180, 0),     # cyan
-    "SOAPING":         (180, 100, 220),   # pink-magenta
-    "RINSING":         (200, 200, 0),     # teal
-    "TOWEL_DRYING":    (100, 180, 60),    # emerald
-    "CLOTHES_DRYING":  (60, 140, 190),    # warm orange
-    "BLOWER_DRYING":   (180, 160, 50),    # blue-teal
-    "DONE":            (80, 200, 80),     # green
+    "IDLE":              (140, 130, 120),  # gray
+    "WATER_NO_HANDS":    (200, 160, 40),   # blue
+    "HANDS_NO_WATER":    (50, 160, 200),   # orange
+    "WASHING":           (200, 180, 0),     # cyan
+    "SOAPING":           (180, 100, 220),   # pink-magenta
+    "RINSING":           (200, 200, 0),     # teal
+    "RINSING_OK":        (180, 210, 0),     # teal-green
+    "RINSING_THOROUGH":  (120, 220, 0),     # green-teal
+    "TOWEL_DRYING":      (100, 180, 60),    # emerald
+    "CLOTHES_DRYING":    (60, 140, 190),    # warm orange
+    "BLOWER_DRYING":     (180, 160, 50),    # blue-teal
+    "DONE":              (80, 200, 80),     # green
 }
 
 # === VLM Pool ===
 POOL_MODE = "round_robin"
-VLM_PROVIDERS = [
-    {"name": "qwen3vl_gpu0", "url": "http://localhost:8000/v1", "weight": 1.0},
-    {"name": "qwen3vl_gpu1", "url": "http://localhost:8001/v1", "weight": 1.0},
-    {"name": "qwen3vl_gpu2", "url": "http://localhost:8002/v1", "weight": 1.0},
-]

@@ -1,0 +1,144 @@
+{
+  "session_id": "session_1771185097",
+  "state_history": [
+    {
+      "state": "IDLE",
+      "enter_time": 1771185097.03165,
+      "exit_time": 1771185105.6418738
+    },
+    {
+      "state": "WATER_NO_HANDS",
+      "enter_time": 1771185105.6418738,
+      "exit_time": 1771185112.806817
+    },
+    {
+      "state": "WASHING",
+      "enter_time": 1771185112.806817,
+      "exit_time": 1771185119.8689
+    },
+    {
+      "state": "SOAPING",
+      "enter_time": 1771185119.8689,
+      "exit_time": 1771185128.673616
+    },
+    {
+      "state": "RINSING",
+      "enter_time": 1771185128.673616,
+      "exit_time": 1771185136.971073
+    },
+    {
+      "state": "BLOWER_DRYING",
+      "enter_time": 1771185136.971073,
+      "exit_time": 1771185143.511127
+    },
+    {
+      "state": "DONE",
+      "enter_time": 1771185143.511127,
+      "exit_time": null
+    }
+  ],
+  "events": [
+    {
+      "type": "transition",
+      "timestamp": 1771185105.6419141,
+      "from_state": "IDLE",
+      "to_state": "WATER_NO_HANDS",
+      "cues": {
+        "hands_visible": 0.0,
+        "hands_under_water": 0.0,
+        "hands_on_soap": 0.0,
+        "foam_visible": 0.0,
+        "towel_drying": 0.0,
+        "hands_touch_clothes": 0.0,
+        "blower_visible": 0.0,
+        "water_sound": 0.8881728649139404,
+        "blower_sound": 1.2168346756880055e-06
+      }
+    },
+    {
+      "type": "transition",
+      "timestamp": 1771185112.806855,
+      "from_state": "WATER_NO_HANDS",
+      "to_state": "WASHING",
+      "cues": {
+        "hands_visible": 1.0,
+        "hands_under_water": 1.0,
+        "hands_on_soap": 0.0,
+        "foam_visible": 0.0,
+        "towel_drying": 0.0,
+        "hands_touch_clothes": 0.0,
+        "blower_visible": 0.0,
+        "water_sound": 0.8843516707420349,
+        "blower_sound": 2.737673412411823e-07
+      }
+    },
+    {
+      "type": "transition",
+      "timestamp": 1771185119.868944,
+      "from_state": "WASHING",
+      "to_state": "SOAPING",
+      "cues": {
+        "hands_visible": 1.0,
+        "hands_under_water": 0.0,
+        "hands_on_soap": 1.0,
+        "foam_visible": 0.0,
+        "towel_drying": 0.0,
+        "hands_touch_clothes": 0.0,
+        "blower_visible": 0.0,
+        "water_sound": 0.04200230538845062,
+        "blower_sound": 1.2388107279548422e-05
+      }
+    },
+    {
+      "type": "transition",
+      "timestamp": 1771185128.673646,
+      "from_state": "SOAPING",
+      "to_state": "RINSING",
+      "cues": {
+        "hands_visible": 1.0,
+        "hands_under_water": 1.0,
+        "hands_on_soap": 0.0,
+        "foam_visible": 1.0,
+        "towel_drying": 0.0,
+        "hands_touch_clothes": 0.0,
+        "blower_visible": 0.0,
+        "water_sound": 0.850488007068634,
+        "blower_sound": 8.386414229732964e-09
+      }
+    },
+    {
+      "type": "transition",
+      "timestamp": 1771185136.971103,
+      "from_state": "RINSING",
+      "to_state": "BLOWER_DRYING",
+      "cues": {
+        "hands_visible": 1.0,
+        "hands_under_water": 0.0,
+        "hands_on_soap": 0.0,
+        "foam_visible": 0.0,
+        "towel_drying": 0.0,
+        "hands_touch_clothes": 0.0,
+        "blower_visible": 1.0,
+        "water_sound": 0.06605419516563416,
+        "blower_sound": 0.08771026134490967
+      }
+    },
+    {
+      "type": "transition",
+      "timestamp": 1771185143.5111701,
+      "from_state": "BLOWER_DRYING",
+      "to_state": "DONE",
+      "cues": {
+        "hands_visible": 1.0,
+        "hands_under_water": 0.0,
+        "hands_on_soap": 0.0,
+        "foam_visible": 0.0,
+        "towel_drying": 0.0,
+        "hands_touch_clothes": 0.0,
+        "blower_visible": 0.0,
+        "water_sound": 0.001164238783530891,
+        "blower_sound": 0.004716731142252684
+      }
+    }
+  ]
+}

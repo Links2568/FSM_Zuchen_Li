@@ -1,0 +1,78 @@
+{
+  "session_id": "session_1771184426",
+  "state_history": [
+    {
+      "state": "IDLE",
+      "enter_time": 1771184426.16277,
+      "exit_time": 1771184457.001527
+    },
+    {
+      "state": "WATER_NO_HANDS",
+      "enter_time": 1771184457.001527,
+      "exit_time": 1771184481.6071098
+    },
+    {
+      "state": "IDLE",
+      "enter_time": 1771184481.6071098,
+      "exit_time": 1771184489.071635
+    },
+    {
+      "state": "HANDS_NO_WATER",
+      "enter_time": 1771184489.071635,
+      "exit_time": null
+    }
+  ],
+  "events": [
+    {
+      "type": "transition",
+      "timestamp": 1771184457.001589,
+      "from_state": "IDLE",
+      "to_state": "WATER_NO_HANDS",
+      "cues": {
+        "hands_visible": 0.0,
+        "hands_under_water": 0.0,
+        "hands_on_soap": 0.0,
+        "foam_visible": 0.0,
+        "towel_drying": 0.0,
+        "hands_touch_clothes": 0.0,
+        "blower_visible": 0.0,
+        "water_sound": 0.7179046869277954,
+        "blower_sound": 1.1503110727062449e-05
+      }
+    },
+    {
+      "type": "transition",
+      "timestamp": 1771184481.607151,
+      "from_state": "WATER_NO_HANDS",
+      "to_state": "IDLE",
+      "cues": {
+        "hands_visible": 1.0,
+        "hands_under_water": 0.0,
+        "hands_on_soap": 0.0,
+        "foam_visible": 0.0,
+        "towel_drying": 0.0,
+        "hands_touch_clothes": 0.0,
+        "blower_visible": 0.0,
+        "water_sound": 0.052568916231393814,
+        "blower_sound": 1.2627381238417001e-06
+      }
+    },
+    {
+      "type": "transition",
+      "timestamp": 1771184489.071672,
+      "from_state": "IDLE",
+      "to_state": "HANDS_NO_WATER",
+      "cues": {
+        "hands_visible": 1.0,
+        "hands_under_water": 0.0,
+        "hands_on_soap": 0.0,
+        "foam_visible": 0.0,
+        "towel_drying": 0.0,
+        "hands_touch_clothes": 0.0,
+        "blower_visible": 0.0,
+        "water_sound": 0.0011833417229354382,
+        "blower_sound": 9.706093806016725e-06
+      }
+    }
+  ]
+}

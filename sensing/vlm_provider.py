@@ -7,7 +7,7 @@ from typing import Dict, Optional
 import httpx
 import openai
 
-from config import VLM_MAX_TOKENS, VLM_TIMEOUT, VLM_PROMPT
+from config import VLM_MAX_TOKENS, VLM_TIMEOUT, VLM_PROMPT, VLM_MODEL_NAME
 from sensing.base import SensingProvider
 
 log = logging.getLogger(__name__)
@@ -39,14 +39,14 @@ def _parse_vlm_response(text: str) -> Dict[str, float]:
     data = json.loads(text)
     cues = {}
     for key in VISUAL_CUE_KEYS:
-        val = data.get(key, 0.5)
+        val = data.get(key, 0)
         cues[key] = max(0.0, min(1.0, float(val)))
     return cues
 
 
 def _fallback_cues() -> Dict[str, float]:
-    """Return neutral cues when VLM response cannot be parsed."""
-    return {key: 0.5 for key in VISUAL_CUE_KEYS}
+    """Return zero cues when VLM response cannot be parsed."""
+    return {key: 0.0 for key in VISUAL_CUE_KEYS}
 
 
 def _zero_cues() -> Dict[str, float]:
@@ -59,13 +59,17 @@ _BACKOFF_SECONDS = 10.0
 
 
 class VLMProvider(SensingProvider):
-    """Qwen3-VL provider that communicates with a vLLM instance via OpenAI API."""
+    """VLM provider that communicates via OpenAI-compatible API.
 
-    def __init__(self, name: str, base_url: str):
+    Works with local vLLM instances and cloud APIs (Gemini, OpenAI, etc.).
+    """
+
+    def __init__(self, name: str, base_url: str, api_key: str = "dummy"):
         self.name = name
         self.base_url = base_url
+        self._api_key = api_key
         self._client: Optional[openai.AsyncOpenAI] = None
-        self._model_name: Optional[str] = None
+        self._model_name: str = VLM_MODEL_NAME
         self._model_resolved = False
         self._fail_until: float = 0.0
 
@@ -75,7 +79,7 @@ class VLMProvider(SensingProvider):
         if self._client is None:
             self._client = openai.AsyncOpenAI(
                 base_url=self.base_url,
-                api_key="dummy",
+                api_key=self._api_key,
                 max_retries=0,
                 timeout=httpx.Timeout(VLM_TIMEOUT, connect=5.0),
             )
@@ -93,9 +97,12 @@ class VLMProvider(SensingProvider):
         self._fail_until = time.monotonic() + _BACKOFF_SECONDS
 
     async def _resolve_model_name(self) -> str:
-        """Query /v1/models to get the actual model name served by vLLM."""
+        """Query /v1/models to get the actual model name served by vLLM.
+
+        For cloud APIs (Gemini, etc.) this may fail; falls back to VLM_MODEL_NAME.
+        """
         if self._model_resolved:
-            return self._model_name  # type: ignore[return-value]
+            return self._model_name
         try:
             models = await self.client.models.list()
             if models.data:
@@ -105,8 +112,7 @@ class VLMProvider(SensingProvider):
                 return self._model_name
         except Exception as e:
             log.warning(f"[{self.name}] Could not resolve model name: {e}")
-        from config import VLM_MODEL_NAME
-        self._model_name = VLM_MODEL_NAME
+        # Fall back to the name from config (already set in __init__)
         self._model_resolved = True
         return self._model_name
 
@@ -155,6 +161,10 @@ class VLMProvider(SensingProvider):
                 max_tokens=VLM_MAX_TOKENS,
             )
             text = response.choices[0].message.content or ""
+            log.debug(f"[{self.name}] Raw response: {text!r}")
+            if not text.strip():
+                log.warning(f"[{self.name}] Empty response from VLM (thinking tokens may have consumed the budget)")
+                return _fallback_cues()
             cues = _parse_vlm_response(text)
             log.debug(f"[{self.name}] Cues: {cues}")
             return cues

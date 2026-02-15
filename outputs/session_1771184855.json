@@ -1,0 +1,34 @@
+{
+  "session_id": "session_1771184855",
+  "state_history": [
+    {
+      "state": "IDLE",
+      "enter_time": 1771184855.299654,
+      "exit_time": 1771184865.109298
+    },
+    {
+      "state": "HANDS_NO_WATER",
+      "enter_time": 1771184865.109298,
+      "exit_time": null
+    }
+  ],
+  "events": [
+    {
+      "type": "transition",
+      "timestamp": 1771184865.1093261,
+      "from_state": "IDLE",
+      "to_state": "HANDS_NO_WATER",
+      "cues": {
+        "hands_visible": 1.0,
+        "hands_under_water": 0.0,
+        "hands_on_soap": 0.0,
+        "foam_visible": 0.0,
+        "towel_drying": 0.0,
+        "hands_touch_clothes": 0.0,
+        "blower_visible": 0.0,
+        "water_sound": 3.879946962115355e-05,
+        "blower_sound": 1.0086680958920624e-05
+      }
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "session_id": "session_1771179426",
+  "state_history": [
+    {
+      "state": "IDLE",
+      "enter_time": 1771179426.418464,
+      "exit_time": 1771179436.578549
+    },
+    {
+      "state": "HANDS_NO_WATER",
+      "enter_time": 1771179436.578549,
+      "exit_time": 1771179445.50798
+    },
+    {
+      "state": "IDLE",
+      "enter_time": 1771179445.50798,
+      "exit_time": null
+    }
+  ],
+  "events": [
+    {
+      "type": "transition",
+      "timestamp": 1771179436.578582,
+      "from_state": "IDLE",
+      "to_state": "HANDS_NO_WATER",
+      "cues": {
+        "hands_visible": 1.0,
+        "hands_under_water": 0.0,
+        "hands_on_soap": 0.0,
+        "foam_visible": 0.0,
+        "towel_drying": 0.0,
+        "hands_touch_clothes": 0.0,
+        "blower_visible": 0.0,
+        "water_sound": 0.000501550268381834,
+        "blower_sound": 0.0004968083230778575
+      }
+    },
+    {
+      "type": "transition",
+      "timestamp": 1771179445.5080152,
+      "from_state": "HANDS_NO_WATER",
+      "to_state": "IDLE",
+      "cues": {
+        "hands_visible": 0.0,
+        "hands_under_water": 0.0,
+        "hands_on_soap": 0.0,
+        "foam_visible": 0.0,
+        "towel_drying": 0.0,
+        "hands_touch_clothes": 0.0,
+        "blower_visible": 0.0,
+        "water_sound": 0.0003081330796703696,
+        "blower_sound": 1.887841847292293e-07
+      }
+    }
+  ]
+}

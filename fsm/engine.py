@@ -26,6 +26,9 @@ class FSMEngine:
         # Idle timeout: time of last detected activity
         self._last_activity_time: float = time.time()
 
+        # Adaptive guidance: Level of Detail increases on idle timeout regressions
+        self.lod_level: int = 0
+
     # ── Properties ──
 
     @property
@@ -89,6 +92,8 @@ class FSMEngine:
             self.current_state not in ("IDLE", "DONE")
             and (now - self._last_activity_time) >= IDLE_TIMEOUT
         ):
+            # Increase guidance detail on idle regression
+            self.lod_level = min(self.lod_level + 1, 2)
             return self._transition_to("IDLE")
 
         return None
@@ -129,7 +134,9 @@ class FSMEngine:
         points_map = {
             "WASHING": 15,
             "SOAPING": 25,
-            "RINSING": 20,
+            "RINSING": 8,
+            "RINSING_OK": 6,
+            "RINSING_THOROUGH": 6,
             "TOWEL_DRYING": 15,
             "CLOTHES_DRYING": 5,
             "BLOWER_DRYING": 10,
@@ -160,3 +167,4 @@ class FSMEngine:
         self.cue_buffer.clear()
         self._condition_since.clear()
         self._last_activity_time = time.time()
+        self.lod_level = 0

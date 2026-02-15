@@ -2,17 +2,17 @@
   HAND WASHING ASSESSMENT REPORT
 ==================================================
 
-Total session time: 21.3s
+Total session time: 66.0s
 States visited: 4
 Completed: No
 
 --------------------------------------------------
   STATE BREAKDOWN
 --------------------------------------------------
-  IDLE                0.0s -   14.1s  (14.1s)
-  WASHING            14.1s -   16.4s  (2.4s)
-  SOAPING            16.4s -   21.3s  (4.9s)
-  RINSING            21.3s -   21.3s  (0.0s)
+  IDLE                0.0s -    8.5s  (8.5s)
+  WATER_NO_HANDS      8.5s -   64.4s  (55.9s)
+  IDLE               64.4s -   66.0s  (1.6s)
+  HANDS_NO_WATER     66.0s -   66.0s  (0.0s)
 
 
 ==================================================

@@ -29,12 +29,13 @@ class GUIApp:
         state_history: List[Dict],
         last_tts: str,
         score: Optional[Dict] = None,
+        guidance: str = "",
     ) -> np.ndarray:
         """Compose and display the split-screen frame."""
         left = self.camera_panel.render(
             camera_frame, cues, current_state, time_in_state, last_tts, score
         )
-        right = self.fsm_panel.render(current_state, state_history, time_in_state, score)
+        right = self.fsm_panel.render(current_state, state_history, time_in_state, score, guidance)
         combined = np.hstack([left, right])
         cv2.imshow("Hand Washing Assessment", combined)
         return combined
