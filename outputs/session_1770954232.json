@@ -1,0 +1,252 @@
+{
+  "session_id": "session_1770954232",
+  "state_history": [
+    {
+      "state": "IDLE",
+      "enter_time": 1770954232.267421,
+      "exit_time": 1770954309.5741282
+    },
+    {
+      "state": "WETTING",
+      "enter_time": 1770954309.5741282,
+      "exit_time": 1770954315.274563
+    },
+    {
+      "state": "SOAPING",
+      "enter_time": 1770954315.274563,
+      "exit_time": 1770954325.457759
+    },
+    {
+      "state": "SCRUBBING",
+      "enter_time": 1770954325.457759,
+      "exit_time": 1770954336.221576
+    },
+    {
+      "state": "RINSING",
+      "enter_time": 1770954336.221576,
+      "exit_time": 1770954342.5433788
+    },
+    {
+      "state": "SCRUBBING",
+      "enter_time": 1770954342.5433788,
+      "exit_time": 1770954353.24429
+    },
+    {
+      "state": "RINSING",
+      "enter_time": 1770954353.24429,
+      "exit_time": 1770954354.179169
+    },
+    {
+      "state": "SCRUBBING",
+      "enter_time": 1770954354.179169,
+      "exit_time": 1770954359.545296
+    },
+    {
+      "state": "IDLE",
+      "enter_time": 1770954359.545296,
+      "exit_time": 1770954374.856611
+    },
+    {
+      "state": "WETTING",
+      "enter_time": 1770954374.856611,
+      "exit_time": 1770954385.111085
+    },
+    {
+      "state": "SOAPING",
+      "enter_time": 1770954385.111085,
+      "exit_time": null
+    }
+  ],
+  "events": [
+    {
+      "type": "transition",
+      "timestamp": 1770954309.574181,
+      "from_state": "IDLE",
+      "to_state": "WETTING",
+      "cues": {
+        "hands_visible": 1.0,
+        "water_running": 1.0,
+        "hands_under_water": 1.0,
+        "soap_present": 0.0,
+        "foam_visible": 0.0,
+        "hands_rubbing": 0.0,
+        "hands_being_dried": 0.0,
+        "water_running_audio": 0.024607723578810692,
+        "rubbing_audio": 0.023030273616313934,
+        "drying_audio": 0.00021993789414409548,
+        "silence_audio": 0.0014564087614417076
+      }
+    },
+    {
+      "type": "transition",
+      "timestamp": 1770954315.2746081,
+      "from_state": "WETTING",
+      "to_state": "SOAPING",
+      "cues": {
+        "hands_visible": 1.0,
+        "water_running": 0.0,
+        "hands_under_water": 0.0,
+        "soap_present": 1.0,
+        "foam_visible": 0.0,
+        "hands_rubbing": 0.0,
+        "hands_being_dried": 0.0,
+        "water_running_audio": 1.5594123397022486e-05,
+        "rubbing_audio": 2.224860327260103e-05,
+        "drying_audio": 1.2253742170287296e-05,
+        "silence_audio": 0.2500287890434265
+      }
+    },
+    {
+      "type": "transition",
+      "timestamp": 1770954325.4577868,
+      "from_state": "SOAPING",
+      "to_state": "SCRUBBING",
+      "cues": {
+        "hands_visible": 1.0,
+        "water_running": 1.0,
+        "hands_under_water": 1.0,
+        "soap_present": 1.0,
+        "foam_visible": 1.0,
+        "hands_rubbing": 1.0,
+        "hands_being_dried": 0.0,
+        "water_running_audio": 0.8443537354469299,
+        "rubbing_audio": 1.5224761227727868e-05,
+        "drying_audio": 3.28655332850758e-05,
+        "silence_audio": 0.0003932354156859219
+      }
+    },
+    {
+      "type": "transition",
+      "timestamp": 1770954336.221602,
+      "from_state": "SCRUBBING",
+      "to_state": "RINSING",
+      "cues": {
+        "hands_visible": 1.0,
+        "water_running": 1.0,
+        "hands_under_water": 1.0,
+        "soap_present": 0.0,
+        "foam_visible": 0.0,
+        "hands_rubbing": 1.0,
+        "hands_being_dried": 0.0,
+        "water_running_audio": 0.7200621962547302,
+        "rubbing_audio": 6.551943079102784e-05,
+        "drying_audio": 2.9167513275751844e-06,
+        "silence_audio": 0.0008517460664734244
+      }
+    },
+    {
+      "type": "transition",
+      "timestamp": 1770954342.543403,
+      "from_state": "RINSING",
+      "to_state": "SCRUBBING",
+      "cues": {
+        "hands_visible": 1.0,
+        "water_running": 1.0,
+        "hands_under_water": 1.0,
+        "soap_present": 1.0,
+        "foam_visible": 1.0,
+        "hands_rubbing": 1.0,
+        "hands_being_dried": 0.0,
+        "water_running_audio": 0.00038595939986407757,
+        "rubbing_audio": 0.004439537413418293,
+        "drying_audio": 0.0006015931139700115,
+        "silence_audio": 0.6018247604370117
+      }
+    },
+    {
+      "type": "transition",
+      "timestamp": 1770954353.244315,
+      "from_state": "SCRUBBING",
+      "to_state": "RINSING",
+      "cues": {
+        "hands_visible": 1.0,
+        "water_running": 1.0,
+        "hands_under_water": 1.0,
+        "soap_present": 0.0,
+        "foam_visible": 0.0,
+        "hands_rubbing": 1.0,
+        "hands_being_dried": 0.0,
+        "water_running_audio": 0.7777935862541199,
+        "rubbing_audio": 2.4800745450193062e-05,
+        "drying_audio": 4.0134909795597196e-05,
+        "silence_audio": 0.00420348858460784
+      }
+    },
+    {
+      "type": "transition",
+      "timestamp": 1770954354.1791968,
+      "from_state": "RINSING",
+      "to_state": "SCRUBBING",
+      "cues": {
+        "hands_visible": 1.0,
+        "water_running": 1.0,
+        "hands_under_water": 1.0,
+        "soap_present": 1.0,
+        "foam_visible": 1.0,
+        "hands_rubbing": 1.0,
+        "hands_being_dried": 0.0,
+        "water_running_audio": 0.3956373929977417,
+        "rubbing_audio": 1.1595958312682342e-05,
+        "drying_audio": 1.7026843579515116e-06,
+        "silence_audio": 0.00014611805090680718
+      }
+    },
+    {
+      "type": "transition",
+      "timestamp": 1770954359.545347,
+      "from_state": "SCRUBBING",
+      "to_state": "IDLE",
+      "cues": {
+        "hands_visible": 0.0,
+        "water_running": 0.0,
+        "hands_under_water": 0.0,
+        "soap_present": 0.0,
+        "foam_visible": 0.0,
+        "hands_rubbing": 0.0,
+        "hands_being_dried": 0.0,
+        "water_running_audio": 0.00012891460210084915,
+        "rubbing_audio": 7.62413619668223e-05,
+        "drying_audio": 4.6347311581484973e-05,
+        "silence_audio": 0.10817471146583557
+      }
+    },
+    {
+      "type": "transition",
+      "timestamp": 1770954374.8566442,
+      "from_state": "IDLE",
+      "to_state": "WETTING",
+      "cues": {
+        "hands_visible": 1.0,
+        "water_running": 1.0,
+        "hands_under_water": 1.0,
+        "soap_present": 0.0,
+        "foam_visible": 0.0,
+        "hands_rubbing": 0.0,
+        "hands_being_dried": 0.0,
+        "water_running_audio": 0.0014173402450978756,
+        "rubbing_audio": 0.0010655159130692482,
+        "drying_audio": 0.0013282204745337367,
+        "silence_audio": 0.05324716493487358
+      }
+    },
+    {
+      "type": "transition",
+      "timestamp": 1770954385.1111639,
+      "from_state": "WETTING",
+      "to_state": "SOAPING",
+      "cues": {
+        "hands_visible": 0.0,
+        "water_running": 0.0,
+        "hands_under_water": 0.0,
+        "soap_present": 1.0,
+        "foam_visible": 0.0,
+        "hands_rubbing": 0.0,
+        "hands_being_dried": 0.0,
+        "water_running_audio": 0.000735146168153733,
+        "rubbing_audio": 2.7448026230558753e-05,
+        "drying_audio": 0.0002905138535425067,
+        "silence_audio": 0.005222680047154427
+      }
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "session_id": "session_1770960218",
+  "state_history": [
+    {
+      "state": "IDLE",
+      "enter_time": 1770960218.883693,
+      "exit_time": 1770960255.2159371
+    },
+    {
+      "state": "WASHING",
+      "enter_time": 1770960255.2159371,
+      "exit_time": 1770960255.351851
+    },
+    {
+      "state": "SOAPING",
+      "enter_time": 1770960255.351851,
+      "exit_time": 1770960258.7771258
+    },
+    {
+      "state": "RINSING",
+      "enter_time": 1770960258.7771258,
+      "exit_time": null
+    }
+  ],
+  "events": [
+    {
+      "type": "transition",
+      "timestamp": 1770960255.216026,
+      "from_state": "IDLE",
+      "to_state": "WASHING",
+      "cues": {
+        "hands_visible": 1.0,
+        "hands_under_water": 1.0,
+        "hands_rubbing": 0.0,
+        "hands_on_soap": 1.0,
+        "foam_visible": 0.0,
+        "towel_drying": 0.0,
+        "hands_wiping_clothes": 0.0,
+        "blower_visible": 0.0,
+        "water_sound": 0.5626249313354492,
+        "blower_sound": 0.0001207118111778982
+      }
+    },
+    {
+      "type": "transition",
+      "timestamp": 1770960255.351876,
+      "from_state": "WASHING",
+      "to_state": "SOAPING",
+      "cues": {
+        "hands_visible": 1.0,
+        "hands_under_water": 0.0,
+        "hands_rubbing": 0.0,
+        "hands_on_soap": 1.0,
+        "foam_visible": 0.0,
+        "towel_drying": 0.0,
+        "hands_wiping_clothes": 0.0,
+        "blower_visible": 0.0,
+        "water_sound": 0.5626249313354492,
+        "blower_sound": 0.0001207118111778982
+      }
+    },
+    {
+      "type": "transition",
+      "timestamp": 1770960258.777161,
+      "from_state": "SOAPING",
+      "to_state": "RINSING",
+      "cues": {
+        "hands_visible": 1.0,
+        "hands_under_water": 1.0,
+        "hands_rubbing": 1.0,
+        "hands_on_soap": 0.0,
+        "foam_visible": 1.0,
+        "towel_drying": 0.0,
+        "hands_wiping_clothes": 0.0,
+        "blower_visible": 0.0,
+        "water_sound": 0.7947604656219482,
+        "blower_sound": 3.095072429459833e-07
+      }
+    }
+  ]
+}
